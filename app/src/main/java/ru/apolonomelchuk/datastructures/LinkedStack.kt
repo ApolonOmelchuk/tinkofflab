@@ -11,14 +11,19 @@ class LinkedStack {
     }
 
     fun add(element: Any?){
-        var h = this.head
         val newNode = Node(element)
         newNode.next = null
-        while (h?.next != null){
-            h = h.next
+        var h = head
+        if (h == null) {
+            head = newNode
         }
-        h?.next = newNode
-        newNode.prev = h
+        else {
+            while (h!!.next != null){
+                h = h.next
+            }
+            h.next = newNode
+            newNode.prev = h
+        }
         tail = newNode
         current = newNode
     }
@@ -31,5 +36,9 @@ class LinkedStack {
     fun getNext(): Any? {
         current = current?.next
         return current?.element
+    }
+
+    fun isFirstElement(element: Any?): Boolean {
+        return head?.element == element
     }
 }
