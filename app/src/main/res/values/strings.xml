@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">tinkofflab</string>
+    <string name="btnNext_content_description">Next GIF</string>
+    <string name="btnPrevious_content_description">Previous GIF</string>
 </resources>
