@@ -3,16 +3,21 @@ package ru.apolonomelchuk.tinkofflab
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
 import ru.apolonomelchuk.datastructures.GifWrapper
 import ru.apolonomelchuk.datastructures.LinkedStack
 import java.net.URL
+import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), CoroutineScope {
     val getRandomGifUrl = "https://developerslife.ru/random?json=true"
     var gifsList = LinkedStack()
+    private var job: Job = Job()
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,40 +26,54 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        Glide.get(this).clearDiskCache()
-        Glide.get(this).clearMemory()
         super.onDestroy()
+        job.cancel()
+        GlideApp.get(this).clearDiskCache()
+        GlideApp.get(this).clearMemory()
     }
 
     fun getNextGif(view: View) {
         val nextGifFromCache = gifsList.getNext()
-        val nextGif = if (nextGifFromCache != null) nextGifFromCache as GifWrapper else getNextRandomGif()
-        loadGif(nextGif)
-        if (!gifsList.isFirstElement(nextGif)){
-            btnPrevious.isClickable = true
+        if (nextGifFromCache == null) {
+            launch {
+                val result =  getNextRandomGif()
+                loadGif(result)
+                if (!gifsList.isFirstElement(result)){
+                    btnPrevious.isClickable = true
+                }
+            }
+        }
+        else {
+            val nextGif = nextGifFromCache as GifWrapper
+            loadGif(nextGif)
+            if (!gifsList.isFirstElement(nextGif)) {
+                btnPrevious.isClickable = true
+            }
         }
     }
 
     fun getPrevGif(view: View) {
         val prevGifFromCache = gifsList.getPrevious() as GifWrapper
         loadGif(prevGifFromCache)
-        if (!gifsList.isFirstElement(prevGifFromCache)) {
+        if (gifsList.isFirstElement(prevGifFromCache)) {
             btnPrevious.isClickable = false
         }
     }
 
-    fun getNextRandomGif() : GifWrapper {
-        val response = URL(getRandomGifUrl).readText()
-        val gif = GifWrapper(response)
-        gifsList.add(gif)
-        return gif
+    suspend fun getNextRandomGif() : GifWrapper {
+        withContext(Dispatchers.IO) {
+            val response = URL(getRandomGifUrl).readText()
+            val gif = GifWrapper(response)
+            gifsList.add(gif)
+        }
+        return gifsList.current!!.element as GifWrapper
     }
 
     fun loadGif(gif: GifWrapper) {
-        Glide.with(this)
+        GlideApp.with(this)
             .load(gif.gifUrl)
             .skipMemoryCache(true)
-            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .diskCacheStrategy(DiskCacheStrategy.DATA)
             .into(gifView)
     }
 }
