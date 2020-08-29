@@ -3,6 +3,7 @@ package ru.apolonomelchuk.tinkofflab
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
@@ -34,10 +35,11 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     fun getNextGif(view: View) {
         val nextGifFromCache = gifsList.getNext()
+        val circularProgressDrawable = getCircularProgressDrawable()
         if (nextGifFromCache == null) {
             launch {
                 val result =  getNextRandomGif()
-                loadGif(result)
+                loadGif(result, circularProgressDrawable)
                 if (!gifsList.isFirstElement(result)){
                     btnPrevious.isClickable = true
                 }
@@ -45,7 +47,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
         else {
             val nextGif = nextGifFromCache as GifWrapper
-            loadGif(nextGif)
+            loadGif(nextGif, circularProgressDrawable)
             if (!gifsList.isFirstElement(nextGif)) {
                 btnPrevious.isClickable = true
             }
@@ -53,11 +55,20 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     fun getPrevGif(view: View) {
+        val circularProgressDrawable = getCircularProgressDrawable()
         val prevGifFromCache = gifsList.getPrevious() as GifWrapper
-        loadGif(prevGifFromCache)
+        loadGif(prevGifFromCache, circularProgressDrawable)
         if (gifsList.isFirstElement(prevGifFromCache)) {
             btnPrevious.isClickable = false
         }
+    }
+
+    private fun getCircularProgressDrawable(): CircularProgressDrawable {
+        val circularProgressDrawable = CircularProgressDrawable(this)
+        circularProgressDrawable.strokeWidth = 5f
+        circularProgressDrawable.centerRadius = 30f
+        circularProgressDrawable.start()
+        return circularProgressDrawable
     }
 
     suspend fun getNextRandomGif() : GifWrapper {
@@ -69,9 +80,10 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         return gifsList.current!!.element as GifWrapper
     }
 
-    fun loadGif(gif: GifWrapper) {
+    fun loadGif(gif: GifWrapper, progressDrawable: CircularProgressDrawable) {
         GlideApp.with(this)
             .load(gif.gifUrl)
+            .placeholder(progressDrawable)
             .skipMemoryCache(true)
             .diskCacheStrategy(DiskCacheStrategy.DATA)
             .into(gifView)
