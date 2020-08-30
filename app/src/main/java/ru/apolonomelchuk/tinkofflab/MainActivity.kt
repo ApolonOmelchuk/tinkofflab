@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     fun loadGif(gif: GifWrapper, progressDrawable: CircularProgressDrawable) {
+        gifDescription.text = gif.description
         GlideApp.with(this)
             .load(gif.gifUrl)
             .centerCrop()
