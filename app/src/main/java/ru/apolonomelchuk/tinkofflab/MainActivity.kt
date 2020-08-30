@@ -85,6 +85,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     fun loadGif(gif: GifWrapper, progressDrawable: CircularProgressDrawable) {
         GlideApp.with(this)
             .load(gif.gifUrl)
+            .centerCrop()
             .placeholder(progressDrawable)
             .skipMemoryCache(true)
             .diskCacheStrategy(DiskCacheStrategy.DATA)
