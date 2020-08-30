@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         gifDescription.text = gif.description
         GlideApp.with(this)
             .load(gif.gifUrl)
+            .error(R.drawable.ic_load_error)
             .centerCrop()
             .placeholder(progressDrawable)
             .skipMemoryCache(true)
